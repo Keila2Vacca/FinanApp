@@ -48,3 +48,4 @@ fun FinanAppTheme(
         content = content
     )
 }
+

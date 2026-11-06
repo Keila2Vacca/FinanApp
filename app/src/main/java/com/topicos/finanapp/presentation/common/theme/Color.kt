@@ -25,3 +25,4 @@ val FinanExpenseYellow = Color(0xFFF59E0B)
 
 val FinanIncome = Color(0xFF10B981)
 val FinanIncomeLight = Color(0xFFDCFCE7)
+
