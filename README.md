@@ -1,24 +1,38 @@
-# FINANAPP 💳
-### Aplicación Móvil para el Control y Administración de Finanzas Personales
-**Examen 2 – Tópicos Avanzados en Ingeniería**
+FINANAPP 💳
+Aplicación Móvil para el Control y Administración de Finanzas Personales
+Examen 2 – Tópicos Avanzados en Ingeniería
 
 FinanApp es una solución móvil nativa para Android construida con Kotlin y Jetpack Compose bajo Clean Architecture + MVVM + Repository Pattern. Permite registrar, consultar, editar y categorizar ingresos y gastos, visualizar balances en tiempo real, generar métricas estadísticas con gráficas interactivas y conservar toda la información de forma persistente y local mediante Room Database.
 
 ---
 
-## 🚀 Stack Tecnológico
-
-- **Lenguaje:** Kotlin 2.2.x
-- **UI Toolkit:** Jetpack Compose + Material Design 3
-- **Persistencia Local:** Room Database 2.6.x + KSP (Kotlin Symbol Processing)
-- **Navegación:** Navigation 3 / Type-Safe Navigation con destinos serializables (`@Serializable`) y gestión reactiva de BackStack
-- **Arquitectura:** Clean Architecture + Repository Pattern + MVVM
-- **Manejo de Estado:** Kotlin Coroutines, StateFlow y ViewModel
-- **Diseño Adaptativo:** Material 3 Window Size Class (Compact: NavigationBar, Medium: NavigationRail, Expanded: Permanent Sidebar)
-- **Control de Versiones:** Git
+🚀 Stack Tecnológico
+• Lenguaje: Kotlin 2.2.10
+• UI Toolkit: Jetpack Compose + Material Design 3
+• Persistencia Local: Room Database 2.8.5 + KSP (Kotlin Symbol Processing)
+• Navegación: Type-Safe Navigation / Custom Navigation BackStack reactivo
+• Arquitectura: Clean Architecture + Repository Pattern + MVVM
+• Manejo de Estado: Kotlin Coroutines, StateFlow y ViewModel (con gestión de ciclo de vida de formularios)
+• Diseño Adaptativo: Material 3 Window Size Class (Compact: NavigationBar, Medium: NavigationRail, Expanded: Permanent Sidebar)
+• Control de Versiones: Git & GitHub
 
 ---
+📥 Instrucciones de Clonación y Ejecución
+1. Clonar el repositorio desde GitHub
+Abre tu terminal (Git Bash, Command Prompt o PowerShell) y ejecuta el siguiente comando para clonar el proyecto en tu máquina local:
+git clone https://enlaceRepo
+cd FinanApp
+2. Abrir en Android Studio
+1. Abre Android Studio.
+2. Selecciona File > Open (o Open desde la pantalla de bienvenida).
+3. Navega y selecciona la carpeta raíz del proyecto clonado (FinanApp).
+4. Espera a que Android Studio sincronice las dependencias de Gradle automáticamente (Sync Project with Gradle Files). Si deseas sincronizar manualmente, puedes hacer clic en el ícono de elefante en la esquina superior derecha o ejecutar:
+◦ En Windows: gradlew.bat build
 
+3. Ejecutar la Aplicación
+1. Conecta un dispositivo Android físico con la Depuración USB activada o inicia un emulador Android (compatible con celulares, tablets y escritorios).
+2. Haz clic en el botón verde Run 'app' (o presiona Shift + F10) en la barra superior de Android Studio.
+---
 ## 🏛 Arquitectura del Proyecto
 
 El código está organizado en capas independientes con responsabilidades unidireccionales:
@@ -31,43 +45,41 @@ com.topicos.finanapp/
 │   ├── local/
 │   │   ├── dao/MovementDao.kt          # Operaciones CRUD y agregaciones financieras en SQLite
 │   │   ├── entity/MovementEntity.kt    # Entidad Room ("movements") con mapeadores de dominio
-│   │   └── MovementDatabase.kt         # Instancia RoomDatabase y pre-poblado de datos de examen
+│   │   └── MovementDatabase.kt         # Instancia RoomDatabase y pre-poblado de datos
 │   └── repository/MovementRepositoryImpl.kt # Implementación con Dispatchers.IO
 ├── domain/                             # CAPA DE DOMINIO
 │   ├── model/
 │   │   ├── Movement.kt                 # Modelo de negocio
 │   │   ├── MovementType.kt             # Enum INGRESO y GASTO
-│   │   ├── MovementCategory.kt         # 9 categorías del sistema
+│   │   ├── MovementCategory.kt         # Categorías oficiales del sistema
 │   │   └── FinancialSummary.kt         # Balance, totales, promedios y top gastos
 │   └── repository/MovementRepository.kt # Interfaz pura de repositorio (Flows y suspend functions)
 ├── navigation/
-│   ├── Screen.kt                       # Claves serializables de navegación (@Serializable)
+│   ├── Screen.kt                       # Definición de pantallas y rutas
 │   └── FinanNavHost.kt                 # Router adaptativo (Sidebar / NavigationRail / BottomBar)
 ├── presentation/                       # CAPA DE PRESENTACIÓN (Compose)
 │   ├── common/
 │   │   ├── components/                 # Componentes reutilizables (TopBar, Sidebar, StatCards, etc.)
 │   │   └── theme/                      # Colores, tipografía y tema Material 3
-│   ├── dashboard/                      # Pantalla 1: Inicio
-│   ├── movement_register/              # Pantalla 2: Registrar / Editar
-│   ├── movement_list/                  # Pantalla 3: Historial y Búsqueda
-│   ├── movement_detail/                # Pantalla 4: Detalle y Eliminación
-│   ├── statistics/                     # Pantalla 5: Gráficas y Métricas
-│   └── settings/                       # Pantalla 6: Configuración y Datos de Prueba
+│   ├── dashboard/                      # Pantalla 1: Inicio y resumen financiero
+│   ├── movement_register/              # Pantalla 2: Registrar / Editar movimientos (con gestión de estado limpia al guardar consecutivamente)
+│   ├── movement_list/                  # Pantalla 3: Historial y búsqueda de movimientos
+│   ├── movement_detail/                # Pantalla 4: Detalle y eliminación de registros
+│   ├── statistics/                     # Pantalla 5: Gráficas estadísticas y porcentajes
+│   └── settings/                       # Pantalla 6: Configuración de usuario, divisas y datos de prueba
 └── utils/
-    ├── CurrencyFormatter.kt            # Formateador monetario ($ 2.000.000)
-    └── DateUtils.kt                    # Formateador de fechas
+    ├── CurrencyFormatter.kt            # Formateador monetario y separadores de miles
+    └── DateUtils.kt                    # Formateador y manejo de fechas
 ```
 
 ---
 
-## 📊 Solución de Persistencia (Room Database)
-
-La base de datos SQLite `finanapp_database` utiliza Room para garantizar que:
-1. Las operaciones de lectura expongan flujos reactivos `Flow<T>`, actualizando automáticamente las pantallas al agregar, modificar o borrar registros.
-2. Todas las operaciones de escritura (insertar, actualizar, eliminar) se ejecuten en hilos secundarios mediante `Dispatchers.IO`.
-3. Al cerrar y volver a abrir la aplicación, o reiniciar el dispositivo, los registros se conservan intactos.
-4. Incluye funciones de utilidad en *Configuración* para restaurar en 1 clic los 3 movimientos obligatorios del examen o limpiar el historial.
-
+📊 Explicación de la Solución de Persistencia Seleccionada
+Para garantizar una persistencia robusta, eficiente y 100% nativa en Android, se seleccionó Room Database (construida sobre SQLite). Los motivos de su elección son:
+1. Seguridad de Tipos en Tiempo de Compilación: Las consultas SQL en los DAOs (MovementDao) son validadas por el compilador, evitando errores en tiempo de ejecución.
+2. Soportes Reactivos con Coroutines y Flow: MovementDao expone consultas de lectura como Flow<List<MovementEntity>>. Cada vez que se inserta, actualiza o elimina un movimiento, la base de datos notifica automáticamente a la UI a través del flujo reactivo, actualizando saldos y listas en tiempo real sin recargas manuales.
+3. Ejecución en Hilos Secundarios: Todas las operaciones de escritura e inserción están encapsuladas dentro de withContext(Dispatchers.IO) en el repositorio, garantizando que el hilo principal (Main Thread) nunca se bloquee y la interfaz se mantenga fluida a 60/120 FPS.
+4. Persistencia Transaccional: La información sobrevive al cierre de la aplicación, reinicios del dispositivo y caídas de procesos, cumpliendo estrictamente con los requisitos del examen.
 ---
 
 ## 🧪 Pruebas Obligatorias del Examen
@@ -85,12 +97,4 @@ La base de datos SQLite `finanapp_database` utiliza Room para garantizar que:
 | **9** | Comprobar estadísticas | Gráficas corresponden a los registros guardados (Vivienda 70%, Alimentación 30%) |
 
 ---
-
-## 📱 Ejecución en Android Studio
-
-1. Abre Android Studio.
-2. Selecciona **File > Open** y abre la carpeta `C:\Users\USUARIO\AndroidStudioProjects\FinanApp`.
-3. Presiona **Sync Project with Gradle Files**.
-4. Conecta un dispositivo físico con Depuración USB o inicia un emulador Android (celular o tablet).
-5. Haz clic en **Run 'app'** (Shift + F10).
 
