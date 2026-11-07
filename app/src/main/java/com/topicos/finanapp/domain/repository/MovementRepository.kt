@@ -24,3 +24,4 @@ interface MovementRepository {
     suspend fun deleteAllMovements()
     suspend fun restoreExamDemoData()
 }
+

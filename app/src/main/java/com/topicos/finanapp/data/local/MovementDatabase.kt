@@ -58,7 +58,7 @@ abstract class MovementDatabase : RoomDatabase() {
                     description = "Salario mensual",
                     amount = 2500000.0,
                     type = "INGRESO",
-                    category = "Otros",
+                    category = "Sueldo",
                     date = now - (oneDay * 4), // 2 de noviembre
                     note = "Pago nómina mes actual"
                 ),
@@ -85,3 +85,4 @@ abstract class MovementDatabase : RoomDatabase() {
         }
     }
 }
+

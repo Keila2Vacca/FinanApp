@@ -9,3 +9,4 @@ data class DashboardUiState(
     val recentMovements: List<Movement> = emptyList(),
     val errorMessage: String? = null
 )
+

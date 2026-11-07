@@ -9,3 +9,4 @@ data class MovementDetailUiState(
     val isDeleted: Boolean = false,
     val errorMessage: String? = null
 )
+

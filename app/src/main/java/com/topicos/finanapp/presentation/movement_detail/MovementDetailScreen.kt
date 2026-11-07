@@ -64,6 +64,7 @@ fun MovementDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activeCurrency by CurrencyFormatter.currentCurrency.collectAsState()
 
     LaunchedEffect(uiState.isDeleted) {
         if (uiState.isDeleted) {
@@ -188,7 +189,7 @@ fun MovementDetailScreen(
 
                             val amountColor = if (movement.isIncome) FinanGreen else FinanNavy
                             Text(
-                                text = CurrencyFormatter.formatWithSign(movement.amount, movement.isIncome),
+                                text = CurrencyFormatter.formatWithSign(movement.amount, movement.isIncome, activeCurrency),
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = amountColor
@@ -290,3 +291,4 @@ fun DetailRow(label: String, value: String) {
         )
     }
 }
+

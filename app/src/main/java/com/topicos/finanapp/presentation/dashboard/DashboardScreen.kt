@@ -71,6 +71,7 @@ fun DashboardScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activeCurrency by CurrencyFormatter.currentCurrency.collectAsState()
 
     Column(
         modifier = modifier
@@ -110,7 +111,7 @@ fun DashboardScreen(
                                 )
                             )
                             Text(
-                                text = "Andrés Gómez",
+                                text = "Las Chicas Superpoderosas",
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = FinanTextPrimary
@@ -153,6 +154,7 @@ fun DashboardScreen(
                         expense = uiState.summary.totalExpense,
                         movementsCount = uiState.summary.totalMovements,
                         savingsPercentage = uiState.summary.savingsPercentage,
+                        activeCurrency = activeCurrency,
                         onViewReportClick = { onNavigate(Screen.Statistics) }
                     )
                 }
@@ -372,6 +374,7 @@ fun HeroBalanceCard(
     expense: Double,
     movementsCount: Int,
     savingsPercentage: Int,
+    activeCurrency: com.topicos.finanapp.domain.model.AppCurrency,
     onViewReportClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -413,7 +416,7 @@ fun HeroBalanceCard(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = CurrencyFormatter.format(balance),
+                        text = CurrencyFormatter.format(balance, activeCurrency),
                         style = MaterialTheme.typography.headlineLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -477,7 +480,7 @@ fun HeroBalanceCard(
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = CurrencyFormatter.format(income),
+                            text = CurrencyFormatter.format(income, activeCurrency),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = FinanGreen
@@ -511,7 +514,7 @@ fun HeroBalanceCard(
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = CurrencyFormatter.format(expense),
+                            text = CurrencyFormatter.format(expense, activeCurrency),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -664,3 +667,4 @@ fun MainMenuItem(
         )
     }
 }
+

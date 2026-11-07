@@ -10,3 +10,4 @@ enum class MovementType(val value: String, val displayName: String) {
         }
     }
 }
+

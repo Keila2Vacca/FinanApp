@@ -64,13 +64,14 @@ fun MovementListScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activeCurrency by CurrencyFormatter.currentCurrency.collectAsState()
 
     // Diálogo de confirmación de eliminación
     if (uiState.movementToDelete != null) {
         val mov = uiState.movementToDelete!!
         ConfirmDeleteDialog(
             title = "Eliminar movimiento",
-            message = "¿Estás seguro de que deseas eliminar '${mov.description}' por valor de ${CurrencyFormatter.format(mov.amount)}?",
+            message = "¿Estás seguro de que deseas eliminar '${mov.description}' por valor de ${CurrencyFormatter.format(mov.amount, activeCurrency)}?",
             onConfirm = { viewModel.confirmDeleteMovement() },
             onDismiss = { viewModel.dismissDeleteDialog() }
         )
@@ -149,21 +150,21 @@ fun MovementListScreen(
                     ) {
                         SummaryStatCard(
                             title = "Ingresos",
-                            amountFormatted = CurrencyFormatter.format(uiState.summary.totalIncome),
+                            amountFormatted = CurrencyFormatter.format(uiState.summary.totalIncome, activeCurrency),
                             amountColor = FinanGreen,
                             isIncomeArrow = true,
                             modifier = Modifier.weight(1f)
                         )
                         SummaryStatCard(
                             title = "Gastos",
-                            amountFormatted = CurrencyFormatter.format(uiState.summary.totalExpense),
+                            amountFormatted = CurrencyFormatter.format(uiState.summary.totalExpense, activeCurrency),
                             amountColor = FinanTextPrimary,
                             isIncomeArrow = false,
                             modifier = Modifier.weight(1f)
                         )
                         SummaryStatCard(
                             title = "Balance",
-                            amountFormatted = CurrencyFormatter.format(uiState.summary.balance),
+                            amountFormatted = CurrencyFormatter.format(uiState.summary.balance, activeCurrency),
                             amountColor = FinanNavy,
                             modifier = Modifier.weight(1f)
                         )
@@ -335,3 +336,4 @@ fun FilterChipPill(
         )
     }
 }
+

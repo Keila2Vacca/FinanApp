@@ -10,6 +10,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -31,6 +33,7 @@ import com.topicos.finanapp.presentation.settings.SettingsScreen
 import com.topicos.finanapp.presentation.settings.SettingsViewModel
 import com.topicos.finanapp.presentation.statistics.StatisticsScreen
 import com.topicos.finanapp.presentation.statistics.StatisticsViewModel
+import com.topicos.finanapp.utils.CurrencyFormatter
 
 @Composable
 fun FinanNavHost(
@@ -38,6 +41,7 @@ fun FinanNavHost(
     modifier: Modifier = Modifier
 ) {
     val repository = FinanApplication.instance.repository
+    val activeCurrency by CurrencyFormatter.currentCurrency.collectAsState()
     val backStack = remember { mutableStateListOf<Screen>(Screen.Dashboard) }
     val currentScreen = backStack.lastOrNull() ?: Screen.Dashboard
 
@@ -200,3 +204,4 @@ private fun ScreenContent(
         }
     }
 }
+

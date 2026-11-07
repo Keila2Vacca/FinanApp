@@ -134,3 +134,4 @@ class MovementRepositoryImpl(
         MovementDatabase.populateInitialData(movementDao)
     }
 }
+

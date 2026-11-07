@@ -2,6 +2,7 @@ package com.topicos.finanapp.presentation.settings
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,17 +18,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Smartphone
-import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,10 +41,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.topicos.finanapp.domain.model.AppCurrency
 import com.topicos.finanapp.presentation.common.components.ConfirmDeleteDialog
 import com.topicos.finanapp.presentation.common.components.FinanTopBar
 import com.topicos.finanapp.presentation.common.theme.FinanBackground
@@ -110,6 +111,40 @@ fun SettingsScreen(
                             color = FinanTextSecondary
                         )
                     )
+                }
+            }
+
+            // Mensaje de notificación si ocurrió un cambio
+            if (uiState.message != null) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = FinanGreen.copy(alpha = 0.12f)),
+                        border = BorderStroke(1.dp, FinanGreen.copy(alpha = 0.3f))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = FinanGreen,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = uiState.message ?: "",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = FinanNavy
+                                )
+                            )
+                        }
+                    }
                 }
             }
 
@@ -216,10 +251,10 @@ fun SettingsScreen(
                                     )
                                 )
                                 Text(
-                                    text = "COP",
+                                    text = uiState.selectedCurrency.code,
                                     style = MaterialTheme.typography.titleLarge.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = FinanTextPrimary
+                                        color = FinanGreen
                                     )
                                 )
                             }
@@ -228,7 +263,7 @@ fun SettingsScreen(
                 }
             }
 
-            // Tarjeta de Preferencias
+            // Tarjeta de Preferencias (Lista Desplegable de Monedas Principales)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -244,14 +279,14 @@ fun SettingsScreen(
                                 color = FinanTextPrimary
                             )
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Moneda",
                                     style = MaterialTheme.typography.bodyLarge.copy(
@@ -260,26 +295,78 @@ fun SettingsScreen(
                                     )
                                 )
                                 Text(
-                                    text = "Se aplica a todos los valores de la app.",
+                                    text = "Se aplica automáticamente a todos los valores y pantallas de la app.",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = FinanTextSecondary
                                     )
                                 )
                             }
 
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFF1F5F9))
-                                    .padding(horizontal = 14.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = uiState.activeCurrency,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        color = FinanTextPrimary
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            // Selector Desplegable Material 3
+                            Box {
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFFF1F5F9))
+                                        .clickable { viewModel.setCurrencyDropdownExpanded(true) }
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = "${uiState.selectedCurrency.displayName} [${uiState.selectedCurrency.symbol}]",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = FinanNavy
+                                        )
                                     )
-                                )
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "Desplegar opciones de moneda",
+                                        tint = FinanNavy,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+
+                                DropdownMenu(
+                                    expanded = uiState.isCurrencyDropdownExpanded,
+                                    onDismissRequest = { viewModel.setCurrencyDropdownExpanded(false) },
+                                    modifier = Modifier.background(Color.White)
+                                ) {
+                                    AppCurrency.entries.forEach { currency ->
+                                        val isSelected = currency == uiState.selectedCurrency
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = currency.displayName,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                            color = if (isSelected) FinanGreen else FinanTextPrimary
+                                                        )
+                                                    )
+                                                    Spacer(modifier = Modifier.width(12.dp))
+                                                    Text(
+                                                        text = currency.symbol,
+                                                        style = MaterialTheme.typography.bodySmall.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = if (isSelected) FinanGreen else FinanTextMuted
+                                                        )
+                                                    )
+                                                }
+                                            },
+                                            onClick = {
+                                                viewModel.selectCurrency(currency)
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

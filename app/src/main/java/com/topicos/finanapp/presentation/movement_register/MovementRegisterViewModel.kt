@@ -3,6 +3,7 @@ package com.topicos.finanapp.presentation.movement_register
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.topicos.finanapp.domain.model.Movement
+import com.topicos.finanapp.domain.model.MovementCategory
 import com.topicos.finanapp.domain.model.MovementType
 import com.topicos.finanapp.domain.repository.MovementRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,11 +18,14 @@ class MovementRegisterViewModel(
     initialType: String = "GASTO"
 ) : ViewModel() {
 
+    private val defaultType = MovementType.fromString(initialType)
+
     private val _uiState = MutableStateFlow(
         MovementRegisterUiState(
             movementId = movementId,
             isEditing = movementId != null && movementId > 0,
-            type = MovementType.fromString(initialType)
+            type = defaultType,
+            category = MovementCategory.getDefaultCategoryForType(defaultType)
         )
     )
     val uiState: StateFlow<MovementRegisterUiState> = _uiState.asStateFlow()
@@ -53,11 +57,19 @@ class MovementRegisterViewModel(
     }
 
     fun onTypeChanged(type: MovementType) {
-        _uiState.update { it.copy(type = type, errorMessage = null) }
+        _uiState.update { current ->
+            val validCategories = MovementCategory.getCategoriesForType(type)
+            val newCategory = if (validCategories.any { it.id.equals(current.category, ignoreCase = true) }) {
+                current.category
+            } else {
+                MovementCategory.getDefaultCategoryForType(type)
+            }
+            current.copy(type = type, category = newCategory, errorMessage = null)
+        }
     }
 
     fun onAmountChanged(input: String) {
-        // Permitir solo números
+        // Guardar únicamente los dígitos numéricos
         val clean = input.filter { it.isDigit() }
         _uiState.update { it.copy(amountInput = clean, errorMessage = null) }
     }

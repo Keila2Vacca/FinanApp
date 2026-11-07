@@ -62,3 +62,4 @@ interface MovementDao {
     @Query("SELECT COUNT(*) FROM movements")
     fun getMovementCount(): Flow<Int>
 }
+

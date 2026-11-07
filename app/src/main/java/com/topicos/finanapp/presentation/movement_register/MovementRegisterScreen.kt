@@ -22,7 +22,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -39,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +71,7 @@ fun MovementRegisterScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activeCurrency by CurrencyFormatter.currentCurrency.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(uiState.isSavedSuccess) {
@@ -94,6 +95,11 @@ fun MovementRegisterScreen(
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
+
+    // Valor formateado con puntos de miles para mostrar visualmente al usuario
+    val formattedDisplayValue = remember(uiState.amountInput) {
+        CurrencyFormatter.formatInputWithDots(uiState.amountInput)
+    }
 
     Column(
         modifier = modifier
@@ -178,7 +184,7 @@ fun MovementRegisterScreen(
                 }
             }
 
-            // Tarjeta de Valor del Movimiento (Grande, tipo Mockup)
+            // Tarjeta de Valor del Movimiento (con puntos de miles automáticos)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -208,7 +214,7 @@ fun MovementRegisterScreen(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = uiState.type.value,
+                                    text = "${uiState.type.value} (${activeCurrency.code})",
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = if (uiState.type == MovementType.INGRESO) FinanGreen else FinanNavy
@@ -224,7 +230,7 @@ fun MovementRegisterScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "$",
+                                text = activeCurrency.symbol,
                                 style = MaterialTheme.typography.headlineLarge.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = FinanTextPrimary,
@@ -232,8 +238,12 @@ fun MovementRegisterScreen(
                                 )
                             )
                             OutlinedTextField(
-                                value = uiState.amountInput,
-                                onValueChange = { viewModel.onAmountChanged(it) },
+                                value = formattedDisplayValue,
+                                onValueChange = { newValue ->
+                                    // Filtra los dígitos y actualiza el estado numérico puro
+                                    val digits = newValue.filter { it.isDigit() }
+                                    viewModel.onAmountChanged(digits)
+                                },
                                 placeholder = {
                                     Text(
                                         "0",
@@ -259,7 +269,7 @@ fun MovementRegisterScreen(
                         }
 
                         Text(
-                            text = "Escribe solo números, sin puntos ni comas.",
+                            text = "Escribe solo números. Los puntos de separación de miles se agregan automáticamente.",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = FinanTextMuted
                             )
@@ -288,7 +298,9 @@ fun MovementRegisterScreen(
                         OutlinedTextField(
                             value = uiState.description,
                             onValueChange = { viewModel.onDescriptionChanged(it) },
-                            placeholder = { Text("Ej. Mercado de la semana") },
+                            placeholder = {
+                                Text(if (uiState.type == MovementType.INGRESO) "Ej. Sueldo mensual, bono" else "Ej. Mercado de la semana, arriendo")
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(10.dp),
                             singleLine = true,
@@ -301,7 +313,7 @@ fun MovementRegisterScreen(
                 }
             }
 
-            // Selector de Categoría (Grilla de 9 opciones según Mockup)
+            // Selector de Categoría (Diferenciado según Ingreso o Gasto)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -310,19 +322,33 @@ fun MovementRegisterScreen(
                     border = BorderStroke(1.dp, FinanCardBorder)
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "Categoría",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = FinanTextPrimary
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Categoría",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = FinanTextPrimary
+                                )
                             )
-                        )
+
+                            Text(
+                                text = if (uiState.type == MovementType.INGRESO) "Categorías de Ingreso" else "Categorías de Gasto",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = if (uiState.type == MovementType.INGRESO) FinanGreen else FinanNavy,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Render de grilla de 3 columnas
-                        val categories = MovementCategory.allCategories
-                        val chunked = categories.chunked(3)
+                        // Grilla de categorías correspondiente al tipo seleccionado
+                        val currentCategories = MovementCategory.getCategoriesForType(uiState.type)
+                        val chunked = currentCategories.chunked(2)
 
                         chunked.forEach { rowCategories ->
                             Row(
@@ -335,11 +361,15 @@ fun MovementRegisterScreen(
                                     val isSelected = uiState.category.equals(category.id, ignoreCase = true)
                                     CategoryGridButton(
                                         categoryName = category.title,
+                                        subtitle = category.subtitle,
                                         isSelected = isSelected,
                                         isIncome = uiState.type == MovementType.INGRESO,
                                         modifier = Modifier.weight(1f),
                                         onClick = { viewModel.onCategorySelected(category.id) }
                                     )
+                                }
+                                if (rowCategories.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
                         }
@@ -545,38 +575,69 @@ fun TypeSelectorButton(
 @Composable
 fun CategoryGridButton(
     categoryName: String,
+    subtitle: String,
     isSelected: Boolean,
     isIncome: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val (icon, tint) = getCategoryIconAndColor(categoryName, isIncome)
-    val borderColor = if (isSelected) FinanGreen else FinanCardBorder
-    val bgColor = if (isSelected) FinanGreen.copy(alpha = 0.08f) else Color.White
+    val bgColor = if (isSelected) {
+        if (isIncome) FinanGreen.copy(alpha = 0.12f) else FinanNavy.copy(alpha = 0.08f)
+    } else Color.White
 
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(bgColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val activeColor = if (isIncome) FinanGreen else FinanNavy
+    val borderStroke = if (isSelected) BorderStroke(1.5.dp, activeColor) else BorderStroke(1.dp, FinanCardBorder)
+
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        border = borderStroke
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (isSelected) FinanGreen else tint,
-            modifier = Modifier.size(18.dp)
-        )
-        Text(
-            text = categoryName,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) FinanGreen else FinanTextPrimary,
-                fontSize = 12.sp
-            ),
-            maxLines = 1
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (isSelected) activeColor else tint.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (isSelected) Color.White else tint,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = categoryName,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                        color = if (isSelected) activeColor else FinanTextPrimary,
+                        fontSize = 12.sp
+                    ),
+                    maxLines = 1
+                )
+                if (subtitle.isNotBlank()) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = FinanTextMuted,
+                            fontSize = 10.sp
+                        ),
+                        maxLines = 1
+                    )
+                }
+            }
+        }
     }
 }

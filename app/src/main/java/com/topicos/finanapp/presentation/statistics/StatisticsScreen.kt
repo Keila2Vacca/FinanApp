@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,7 +40,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.topicos.finanapp.domain.model.CategorySummary
-import com.topicos.finanapp.presentation.common.components.CategoryIconBadge
 import com.topicos.finanapp.presentation.common.components.FinanTopBar
 import com.topicos.finanapp.presentation.common.components.SummaryStatCard
 import com.topicos.finanapp.presentation.common.components.getCategoryIconAndColor
@@ -59,6 +59,7 @@ fun StatisticsScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val activeCurrency by CurrencyFormatter.currentCurrency.collectAsState()
 
     Column(
         modifier = modifier
@@ -81,7 +82,7 @@ fun StatisticsScreen(
                     .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Título y Subtítulo
+                // Título, Subtítulo y Período Activo
                 item {
                     Column {
                         Text(
@@ -91,12 +92,33 @@ fun StatisticsScreen(
                                 color = FinanTextPrimary
                             )
                         )
-                        Text(
-                            text = "Entiende en qué se va tu dinero y cómo evoluciona tu balance.",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = FinanTextSecondary
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Entiende en qué se va tu dinero y cómo evoluciona tu balance.",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = FinanTextSecondary
+                                )
                             )
-                        )
+                            if (uiState.rangePeriodDescription.isNotBlank()) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(FinanGreen.copy(alpha = 0.12f))
+                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = uiState.rangePeriodDescription,
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = FinanGreen,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -129,42 +151,133 @@ fun StatisticsScreen(
                     ) {
                         SummaryStatCard(
                             title = "Ingresos",
-                            amountFormatted = CurrencyFormatter.format(uiState.summary.totalIncome),
+                            amountFormatted = CurrencyFormatter.format(uiState.summary.totalIncome, activeCurrency),
                             amountColor = FinanGreen,
                             isIncomeArrow = true,
                             modifier = Modifier.weight(1f)
                         )
                         SummaryStatCard(
                             title = "Gastos",
-                            amountFormatted = CurrencyFormatter.format(uiState.summary.totalExpense),
+                            amountFormatted = CurrencyFormatter.format(uiState.summary.totalExpense, activeCurrency),
                             amountColor = FinanTextPrimary,
                             isIncomeArrow = false,
                             modifier = Modifier.weight(1f)
                         )
                         SummaryStatCard(
                             title = "Balance",
-                            amountFormatted = CurrencyFormatter.format(uiState.summary.balance),
+                            amountFormatted = CurrencyFormatter.format(uiState.summary.balance, activeCurrency),
                             amountColor = FinanNavy,
                             modifier = Modifier.weight(1f)
                         )
                         SummaryStatCard(
                             title = "Gasto diario",
-                            amountFormatted = CurrencyFormatter.format(uiState.summary.dailyExpenseAverage),
+                            amountFormatted = CurrencyFormatter.format(uiState.summary.dailyExpenseAverage, activeCurrency),
                             amountColor = FinanTextPrimary,
                             modifier = Modifier.weight(1f)
                         )
                     }
                 }
 
-                // Fila de Gráficas: Ingresos vs Gastos + Gastos por Categoría
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(20.dp)
-                    ) {
-                        // Gráfica de Barras: Ingresos vs Gastos
+                // Si no hay movimientos en el período seleccionado
+                if (uiState.summary.totalMovements == 0) {
+                    item {
                         Card(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            border = BorderStroke(1.dp, FinanCardBorder)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(36.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No se encontraron movimientos registrados para ${uiState.rangeLabel.lowercase()} (${uiState.rangePeriodDescription}).",
+                                    style = MaterialTheme.typography.bodyMedium.copy(color = FinanTextSecondary)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Fila de Gráficas: Ingresos vs Gastos + Gastos por Categoría
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(20.dp)
+                        ) {
+                            // Gráfica de Barras: Ingresos vs Gastos
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                border = BorderStroke(1.dp, FinanCardBorder)
+                            ) {
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Ingresos vs gastos",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = FinanTextPrimary
+                                            )
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(Color(0xFFF1F5F9))
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = "${uiState.summary.totalMovements} mov.",
+                                                style = MaterialTheme.typography.labelSmall.copy(color = FinanTextSecondary)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(20.dp))
+
+                                    IncomeVsExpenseBarChart(
+                                        income = uiState.summary.totalIncome,
+                                        expense = uiState.summary.totalExpense
+                                    )
+                                }
+                            }
+
+                            // Gráfica de Dona: Gastos por Categoría
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                border = BorderStroke(1.dp, FinanCardBorder)
+                            ) {
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Text(
+                                        text = "Gastos por categoría",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = FinanTextPrimary
+                                        )
+                                    )
+
+                                    Spacer(modifier = Modifier.height(20.dp))
+
+                                    DonutExpenseChart(categories = uiState.categories)
+                                }
+                            }
+                        }
+                    }
+
+                    // Tarjeta Inferior: Categorías con mayor gasto
+                    item {
+                        val topCategoryName = uiState.categories.firstOrNull()?.category ?: "Sin registros"
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.White),
                             border = BorderStroke(1.dp, FinanCardBorder)
@@ -176,113 +289,46 @@ fun StatisticsScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Ingresos vs gastos",
+                                        text = "Categorías con mayor gasto",
                                         style = MaterialTheme.typography.titleMedium.copy(
                                             fontWeight = FontWeight.Bold,
                                             color = FinanTextPrimary
                                         )
                                     )
+
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(6.dp))
-                                            .background(Color(0xFFF1F5F9))
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            .background(FinanGreen.copy(alpha = 0.12f))
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
                                     ) {
                                         Text(
-                                            text = "${uiState.summary.totalMovements} mov.",
-                                            style = MaterialTheme.typography.labelSmall.copy(color = FinanTextSecondary)
+                                            text = "Top $topCategoryName",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = FinanGreen
+                                            )
                                         )
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(20.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                                IncomeVsExpenseBarChart(
-                                    income = uiState.summary.totalIncome,
-                                    expense = uiState.summary.totalExpense
-                                )
-                            }
-                        }
-
-                        // Gráfica de Dona: Gastos por Categoría
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            border = BorderStroke(1.dp, FinanCardBorder)
-                        ) {
-                            Column(modifier = Modifier.padding(20.dp)) {
-                                Text(
-                                    text = "Gastos por categoría",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = FinanTextPrimary
-                                    )
-                                )
-
-                                Spacer(modifier = Modifier.height(20.dp))
-
-                                DonutExpenseChart(categories = uiState.categories)
-                            }
-                        }
-                    }
-                }
-
-                // Tarjeta Inferior: Categorías con mayor gasto
-                item {
-                    val topCategoryName = uiState.categories.firstOrNull()?.category ?: "Sin registros"
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = BorderStroke(1.dp, FinanCardBorder)
-                    ) {
-                        Column(modifier = Modifier.padding(20.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Categorías con mayor gasto",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = FinanTextPrimary
-                                    )
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(FinanGreen.copy(alpha = 0.12f))
-                                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                                    ) {
+                                if (uiState.categories.isEmpty()) {
                                     Text(
-                                        text = "Top $topCategoryName",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = FinanGreen
+                                        text = "No hay gastos registrados en este período.",
+                                        style = MaterialTheme.typography.bodyMedium.copy(color = FinanTextMuted),
+                                        modifier = Modifier.padding(vertical = 12.dp)
+                                    )
+                                } else {
+                                    uiState.categories.forEachIndexed { index, item ->
+                                        CategoryProgressRow(
+                                            index = index + 1,
+                                            summary = item
                                         )
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            if (uiState.categories.isEmpty()) {
-                                Text(
-                                    text = "No hay gastos registrados para generar estadísticas.",
-                                    style = MaterialTheme.typography.bodyMedium.copy(color = FinanTextMuted),
-                                    modifier = Modifier.padding(vertical = 12.dp)
-                                )
-                            } else {
-                                uiState.categories.forEachIndexed { index, item ->
-                                    CategoryProgressRow(
-                                        index = index + 1,
-                                        summary = item
-                                    )
-                                    if (index < uiState.categories.size - 1) {
-                                        Spacer(modifier = Modifier.height(14.dp))
+                                        if (index < uiState.categories.size - 1) {
+                                            Spacer(modifier = Modifier.height(14.dp))
+                                        }
                                     }
                                 }
                             }
@@ -410,6 +456,8 @@ fun DonutExpenseChart(
     categories: List<CategorySummary>,
     modifier: Modifier = Modifier
 ) {
+    val activeCurrency by CurrencyFormatter.currentCurrency.collectAsState()
+
     if (categories.isEmpty()) {
         Box(
             modifier = modifier
@@ -417,7 +465,7 @@ fun DonutExpenseChart(
                 .height(160.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Sin datos de gastos", color = FinanTextMuted)
+            Text("Sin datos de gastos en este período", color = FinanTextMuted)
         }
         return
     }
@@ -457,7 +505,9 @@ fun DonutExpenseChart(
 
         // Leyenda
         Column(
-            modifier = Modifier.weight(1f).padding(start = 16.dp),
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             categories.take(4).forEach { cat ->
@@ -486,7 +536,7 @@ fun DonutExpenseChart(
                         )
                     }
                     Text(
-                        text = CurrencyFormatter.format(cat.amount),
+                        text = CurrencyFormatter.format(cat.amount, activeCurrency),
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = FinanTextPrimary
@@ -504,6 +554,7 @@ fun CategoryProgressRow(
     summary: CategorySummary
 ) {
     val (_, catColor) = getCategoryIconAndColor(summary.category, false)
+    val activeCurrency by CurrencyFormatter.currentCurrency.collectAsState()
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -546,7 +597,7 @@ fun CategoryProgressRow(
             }
 
             Text(
-                text = CurrencyFormatter.format(summary.amount),
+                text = CurrencyFormatter.format(summary.amount, activeCurrency),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = FinanTextPrimary

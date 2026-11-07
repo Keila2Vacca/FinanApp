@@ -12,3 +12,4 @@ data class Movement(
     val isIncome: Boolean get() = type == MovementType.INGRESO
     val isExpense: Boolean get() = type == MovementType.GASTO
 }
+

@@ -13,3 +13,4 @@ data class MovementListUiState(
     val movementToDelete: Movement? = null,
     val errorMessage: String? = null
 )
+

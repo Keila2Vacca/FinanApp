@@ -15,3 +15,4 @@ data class FinancialSummary(
     val savingsPercentage: Int = 0,
     val topExpenseCategories: List<CategorySummary> = emptyList()
 )
+

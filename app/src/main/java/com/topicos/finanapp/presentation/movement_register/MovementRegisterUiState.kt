@@ -16,3 +16,4 @@ data class MovementRegisterUiState(
     val isSavedSuccess: Boolean = false,
     val errorMessage: String? = null
 )
+

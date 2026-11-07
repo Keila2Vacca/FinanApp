@@ -93,3 +93,4 @@ La base de datos SQLite `finanapp_database` utiliza Room para garantizar que:
 3. Presiona **Sync Project with Gradle Files**.
 4. Conecta un dispositivo físico con Depuración USB o inicia un emulador Android (celular o tablet).
 5. Haz clic en **Run 'app'** (Shift + F10).
+
